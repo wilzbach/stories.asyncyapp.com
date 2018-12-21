@@ -1,13 +1,13 @@
 http server as client
     when client listen path: '/github' as request
         state = request.query_params['state']  # cli generated
-        redirect_url = 'https://login.asyncyapp.com/github/oauth_success'
+        redirect_url = 'https://stories.asyncyapp.com/github/oauth_success'
         request redirect url: 'https://github.com/login/oauth/authorize' query: {'scope': 'user:email,write:repo_hook,public_repo', 'state': state, 'client_id': app.secrets.github_client_id, 'redirect_uri': redirect_url}
 
     # BEGIN - Proxy for OAuth initiated via the Hub API.
 
     when client listen path: '/github/source/hub' as request
-        redirect_url = 'https://login.asyncyapp.com/github/oauth_success/hub'
+        redirect_url = 'https://stories.asyncyapp.com/github/oauth_success/hub'
         request redirect url: 'https://github.com/login/oauth/authorize' query: {'scope': 'user:email,write:repo_hook,public_repo', 'client_id': app.secrets.github_client_id, 'redirect_uri': redirect_url}
 
     when client listen path: '/github/oauth_success/hub' as request
@@ -18,7 +18,7 @@ http server as client
     # END - Proxy for OAuth initiated via the Hub API.
 
     # Postback URL for the GH oauth, initiated via the CLI
-    # The URL should look something like this - https://login.asyncyapp.com/github/oauth_success
+    # The URL should look something like this - https://stories.asyncyapp.com/github/oauth_success
     when client listen path:'/github/oauth_success' as request
         state = request.query_params['state']  # cli generated
         code = request.query_params['code']  # gh auth code
