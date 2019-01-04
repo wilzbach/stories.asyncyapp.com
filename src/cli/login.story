@@ -61,8 +61,8 @@ http server as client
             request write content: 'null' # todo: DO NOT DEPLOY - "request" goes in as services in the compiled tree
         else
             user_data = json parse content: user_data_str
+            request set_header key: 'Content-Type' value: 'application/json; charset=utf-8'
             if user_data['beta']
-                request set_header key: 'Content-Type' value: 'application/json; charset=utf-8'
                 request write content: user_data['result']
             else
                 request write content: '{"beta": false}'
