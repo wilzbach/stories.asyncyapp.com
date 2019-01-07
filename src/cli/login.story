@@ -45,24 +45,13 @@ http server as client
         secret_raw = psql exec query: 'select secret from token_secrets where token_uuid=%(token_uuid)s' data: {'token_uuid': creds['token_uuid']}
         token_secret = secret_raw['results'][0]['secret']
 
-        # Check if the user is in the beta list.
-        beta_raw = psql exec query: 'select true as beta from app_runtime.beta_users where username=%(login)s limit 1' data: {'login': user['login']}
-        beta = beta_raw['results'][0]['beta']
-
         # Push the state in Redis.
         redis set key: state value: (json stringify content: {'id': creds['owner_uuid'], 'access_token': token_secret, 'name': user['name'], 'email': user['email'], 'username': user['login'], 'beta': beta})
         redis expire key: state seconds: 3600  # One hour.
-        request redirect url: 'https://login.asyncy.com/success' query: {'name': user['name'], 'beta': beta}
+        request redirect url: 'https://login.asyncy.com/success' query: {'name': user['name']}
 
     # The Asyncy CLI will long poll this endpoint to get login creds.
     when client listen path:'/github/oauth_callback' as request
-        user_data_str = redis get key: request.query_params['state']  # CLI generated uuid.
-        if user_data_str == null
-            request write content: 'null' # todo: DO NOT DEPLOY - "request" goes in as services in the compiled tree
-        else
-            user_data = json parse content: user_data_str
-            if user_data['beta']
-                request set_header key: 'Content-Type' value: 'application/json; charset=utf-8'
-                request write content: user_data['result']
-            else
-                request write content: '{"beta": false}'
+        user_data = redis get key: request.query_params['state']  # CLI generated uuid.
+        request set_header key: 'Content-Type' value: 'application/json; charset=utf-8'
+        request write content: user_data['result']
