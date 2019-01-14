@@ -9,3 +9,7 @@ http server as server
     id = req.body["id"]
     profile = req.body["profile"]
     clevertap push profile: profile identity: id
+
+  when server listen path: "/track/ghost/subscriber/added" method: "post" as req
+    email = req.body["subscribers"][0]["email"]
+    clevertap push event: "Interested in blog updates" identity: email
