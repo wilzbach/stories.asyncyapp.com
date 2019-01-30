@@ -46,7 +46,7 @@ http server as client
         token_secret = secret_raw['results'][0]['secret']
 
         # Push the state in Redis.
-        redis set key: state value: (json stringify content: {'id': creds['owner_uuid'], 'access_token': token_secret, 'name': user['name'], 'email': user['email'], 'username': user['login'], 'beta': beta})
+        redis set key: state value: (json stringify content: {'id': creds['owner_uuid'], 'access_token': token_secret, 'name': user['name'], 'email': primary_email, 'username': user['login'], 'beta': beta})
         redis expire key: state seconds: 3600  # One hour.
         request redirect url: 'https://login.asyncy.com/success' query: {'name': user['name']}
 
