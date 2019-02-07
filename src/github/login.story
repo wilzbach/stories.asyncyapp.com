@@ -10,8 +10,8 @@ http server
                         value: redirect
                         expires: 3600
 
-        url = github oauthRedirect scope:['read:user', 'user:email', 'read:org'] :state
-        req redirect :url
+        scope = ['read:user', 'user:email', 'read:org']
+        req redirect url:(github oauthRedirect :scope :state)
 
     when listen path:'/github/oauth_success' method:'get' as req
         # Called only by GitHub during oauth redirecting
@@ -38,13 +38,14 @@ http server
 
     when listen path:'/github/oauth_callback' as req
         # Call to get oauth cleint state /github/oauth_callback?state=
-        ###
-          TODO add a secret here too. A UUID is hard to guess
-          but not impossible. Adding one more secret variable check
-          would make it significantly harder to hijack a session
-        ###
         user_data = redis hgetall key: req.query_params['state']
         if user_data
             req write content: user_data
         else
             req set_status code: 204
+
+    when listen path:'/github/app/installed' as req
+        # This catches a user after they installed the Asyncy GitHub app
+        # Should redirect them to where they last were
+        url = (req get_cookie name:'gh_app_redirect') or 'https://hub.asyncy.com'
+        req redirect :url
