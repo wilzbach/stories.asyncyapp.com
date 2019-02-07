@@ -10,7 +10,7 @@ http server
                         value: redirect
                         expires: 3600
 
-        url = github oauthRedirect scope:['read:user', 'user:email'] :state
+        url = github oauthRedirect scope:['read:user', 'user:email', 'read:org'] :state
         req redirect :url
 
     when listen path:'/github/oauth_success' method:'get' as req
