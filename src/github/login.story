@@ -1,3 +1,5 @@
+import 'github_apps' as GitHubApps
+
 http server
     when listen path:'/github/login' method:'get' as req
         # /github/login?state=&redirect=
@@ -46,6 +48,20 @@ http server
 
     when listen path:'/github/app/installed' as req
         # This catches a user after they installed the Asyncy GitHub app
-        # Should redirect them to where they last were
-        url = (req get_cookie name:'gh_app_redirect') or 'https://hub.asyncy.com'
-        req redirect :url
+
+        # Redirect the user back to the last page they were on
+        url = req get_cookie name:'gh_app_redirect'
+        if url
+            req redirect :url
+        else
+            req redirect url:'https://hub.asyncy.com'
+        req finish
+
+        ###
+        GitHub sends a webhook when the GitHub App is installed,
+        assuming the webhook did not make it before the user is redirected
+        after installation we will check GitHub if the app is installed
+        ###
+        org = req get_cookie name:'gh_app_org'
+        if org
+            GitHubApps.Sync :org
