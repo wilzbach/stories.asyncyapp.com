@@ -59,10 +59,11 @@ http server as client
         user_data = redis get key: request.query_params['state']  # CLI generated uuid.
         if user_data['result'] == null
             request write content: 'null'
+            return
+
+        user_data = json parse content: user_data['result']
+        if user_data['beta']
+            request set_header key: 'Content-Type' value: 'application/json; charset=utf-8'
+            request write content: user_data
         else
-            user_data = json parse content: user_data['result']
-            if user_data['beta']
-                request set_header key: 'Content-Type' value: 'application/json; charset=utf-8'
-                request write content: user_data
-            else
-                request write content: {'beta': false}
+            request write content: {'beta': false}
