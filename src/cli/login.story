@@ -49,6 +49,11 @@ http server as client
         beta_raw = psql exec query: 'select true as beta from app_runtime.beta_users where username=%(login)s limit 1' data: {'login': user['login']}
         beta = beta_raw['results'][0]['beta']
 
+        clevertap push profile: {'GitHub Username': user['login'], 'Email': primary_email, 'Name': user['name']} identity: creds['owner_uuid']
+
+        if !beta
+          clevertap push event: 'Login Failed' properties: {'Reason': 'Not in beta'} identity: creds['owner_uuid']
+
         # Push the state in Redis.
         redis set key: state value: (json stringify content: {'id': creds['owner_uuid'], 'access_token': token_secret, 'name': user['name'], 'email': primary_email, 'username': user['login'], 'beta': beta})
         redis expire key: state seconds: 3600  # One hour.
