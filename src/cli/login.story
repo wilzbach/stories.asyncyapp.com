@@ -45,13 +45,32 @@ http server as client
         secret_raw = psql exec query: 'select secret from token_secrets where token_uuid=%(token_uuid)s' data: {'token_uuid': creds['token_uuid']}
         token_secret = secret_raw['results'][0]['secret']
 
+        # Check if the user is in the beta list.
+        beta_raw = psql exec query: 'select true as beta from app_runtime.beta_users where username=%(login)s limit 1' data: {'login': user['login']}
+        beta = beta_raw['results'][0]['beta']
+        if beta == null
+          beta = false
+
+        clevertap push profile: {'GitHub Username': user['login'], 'Email': primary_email, 'Name': user['name']} identity: creds['owner_uuid']
+
+        if !beta
+          clevertap push event: 'Login Failed' properties: {'Reason': 'Not in beta'} identity: creds['owner_uuid']
+
         # Push the state in Redis.
         redis set key: state value: (json stringify content: {'id': creds['owner_uuid'], 'access_token': token_secret, 'name': user['name'], 'email': primary_email, 'username': user['login'], 'beta': beta})
         redis expire key: state seconds: 3600  # One hour.
-        request redirect url: 'https://login.asyncy.com/success' query: {'name': user['name']}
+        request redirect url: 'https://login.asyncy.com/success' query: {'name': user['name'], 'beta': beta}
 
     # The Asyncy CLI will long poll this endpoint to get login creds.
     when client listen path:'/github/oauth_callback' as request
         user_data = redis get key: request.query_params['state']  # CLI generated uuid.
-        request set_header key: 'Content-Type' value: 'application/json; charset=utf-8'
-        request write content: user_data['result']
+        if user_data['result'] == null
+            request write content: 'null'
+            return
+
+        user_data = json parse content: user_data['result']
+        if user_data['beta']
+            request set_header key: 'Content-Type' value: 'application/json; charset=utf-8'
+            request write content: user_data
+        else
+            request write content: {'beta': false}
