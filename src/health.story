@@ -9,5 +9,7 @@ http server as client
     stackdriver entries_list filter: filter page_size: 1 order_by: "timestamp desc"
 
     clevertap push event: "Health Check" properties: {} identity: "health_check"
+
+    slack channels
     
     request write content: "OK"
