@@ -10,6 +10,4 @@ http server as client
 
     clevertap push event: "Health Check" properties: {} identity: "health_check"
 
-    slack channels
-    
     request write content: "OK"
