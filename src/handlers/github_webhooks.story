@@ -1,5 +1,5 @@
 http server as server
-  when server listen path: "/github/storyscript/release" as req
+  when server listen path: "/github/storyscript/release" method: "post" as req
     if req.headers["X-GitHub-Event"] == "release"
       name = req.body["name"]
       body = req.body["body"]
