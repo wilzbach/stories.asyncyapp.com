@@ -17,16 +17,22 @@ http server as server
     }
 
     res = http fetch method: "post" headers: graphql_headers body: graphql_body url: "https://api.asyncy.com/graphql"
-    # At the time of writing, if/else is not supported,
-    # so instead, what we'll do is use the app_id returned
-    # from the graphql call. The logic - if the user did not
-    # have access to releases of this app, then it will resolve to "null",
-    # and no logs will be returned.
-    # Hence, very important, override app_uuid right here.
-    app_uuid = res["data"]["allReleases"]["nodes"][0]["appUuid"]
+
+    if app_uuid != res["data"]["allReleases"]["nodes"][0]["appUuid"]
+      req set_status code: 403
+      req write content: "Unknown app\n"
+      app_uuid = null  # In case the return below fails (which it shouldn't, but still)
+      return
+ 
     log info msg: "Retrieving logs for verified app {app_uuid}..."
 
     project_id = app.secrets.project_id
-    filter = "logName:projects/{project_id}/logs/engine resource.type:global jsonPayload.app_id:{app_uuid} severity >= INFO"
+
+    if req.query_params["all"] == "true"
+      # Return all logs from the namespace.
+      filter = "resource.type: container resource.labels.project_id: {project_id} resource.labels.namespace_id: {app_uuid}"
+    else
+      filter = "logName:projects/{project_id}/logs/engine resource.type:global jsonPayload.app_id:{app_uuid} severity >= INFO"
+
     logs = stackdriver entries_list filter: filter page_size: 100 order_by: "timestamp desc"
     req write content: (json stringify content: logs)
