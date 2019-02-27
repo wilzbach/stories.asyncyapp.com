@@ -24,9 +24,17 @@ http server
         res = github graphql query:'query{viewer{login,name,databaseId,email}}' :token
         user = res['data']['viewer']
 
-        # insert into our database
-        res = psql exec query: 'select create_owner_by_login(%(service)s, %(service_id)s, %(username)s, %(name)s, %(email)s, %(oauth_token)s) as data'
-                        data: {'service': 'github', 'service_id': user['databaseId'], 'username': user['login'], 'name': user['name'], 'email': user['email'], 'oauth_token': token}
+        # insert user into our database
+        res = psql exec query: '''select create_owner_by_login(%(service)s,
+                                             %(service_id)s::text, %(username)s,
+                                             %(name)s, %(email)s,
+                                             %(oauth_token)s) as data'''
+                        data: {'service': 'github',
+                               'service_id': user['databaseId'],
+                               'username': user['login'],
+                               'name': user['name'],
+                               'email': user['email'],
+                               'oauth_token': token}
 
         redirect = redis get key: '{state}-redirect'
         if redirect
@@ -35,7 +43,12 @@ http server
             req redirect url: redirect
         else
             # store for the state callback below
-            redis hmset key: state fields: {'id': res['owner_uuid'], 'access_token': res['data']['token_uuid'], 'name': user['name'], 'email': user['email'], 'username': user['login']}
+            redis hmset key: state
+                        fields: {'id': res['owner_uuid'],
+                                 'access_token': res['data']['token_uuid'],
+                                 'name': user['name'],
+                                 'email': user['email'],
+                                 'username': user['login']}
             redis expire key: state seconds: 3600  # One hour.
 
     when listen path:'/github/oauth_callback' as req
@@ -64,4 +77,4 @@ http server
         ###
         org = req get_cookie name:'gh_app_org'
         if org
-            GitHubApps.Sync :org
+            GitHubApps.Sync(:org)

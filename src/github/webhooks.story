@@ -17,4 +17,4 @@ when http server listen path:'/github/webhooks' method:'post' as req
           and go straight for the API whenever possible
           https://developer.github.com/v3/activity/events/types/#installationevent
         ###
-        GitHubApps.Sync org:req.body['installation']['account']['login']
+        GitHubApps.Sync(org:req.body['installation']['account']['login'])
