@@ -29,4 +29,4 @@ http server as server
     project_id = app.secrets.project_id
     filter = "logName:projects/{project_id}/logs/engine resource.type:global jsonPayload.app_id:{app_uuid} severity >= INFO"
     logs = stackdriver entries_list filter: filter page_size: 100 order_by: "timestamp desc"
-    req write content: (json stringify content: logs)
+    req write content: logs
