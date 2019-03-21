@@ -37,8 +37,8 @@ http server as client
         primary_email = emails[0]['email']
 
         # Insert into postgres.
-        service_id = user['id']
-        creds_raw = psql exec query: 'select create_owner_by_login(%(service)s, %(service_id)s, %(username)s, %(name)s, %(email)s, %(oauth_token)s) as data' data: {'service': 'github', 'service_id': '{service_id}', 'username': user['login'], 'name': user['name'], 'email': primary_email, 'oauth_token': token}
+        service_id = user['id'] + ""  # Because "{user['id']}" becomes a int instead of a string with ss 0.12.0.
+        creds_raw = psql exec query: 'select create_owner_by_login(%(service)s, %(service_id)s, %(username)s, %(name)s, %(email)s, %(oauth_token)s) as data' data: {'service': 'github', 'service_id': service_id, 'username': user['login'], 'name': user['name'], 'email': primary_email, 'oauth_token': token}
         creds = creds_raw['results'][0]['data']
 
         # Get the token secret.
