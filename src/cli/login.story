@@ -8,7 +8,7 @@ http server as client
 
     when client listen path: '/github/source/hub' as request
         redirect_url = 'https://stories.asyncyapp.com/github/oauth_success/hub'
-        request redirect url: 'https://github.com/login/oauth/authorize' query: {'scope': 'user:email,write:repo_hook,public_repo', 'client_id': app.secrets.github_client_id, 'redirect_uri': redirect_url}
+        request redirect url: 'https://github.com/login/oauth/authorize' query: {'scope': 'user:email', 'client_id': app.secrets.github_client_id, 'redirect_uri': redirect_url}
 
     when client listen path: '/github/oauth_success/hub' as request
         code = request.query_params['code']  # gh auth code
