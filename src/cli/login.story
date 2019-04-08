@@ -39,15 +39,15 @@ http server as client
         # Insert into postgres.
         service_id = user['id'] + ""  # Because "{user['id']}" becomes a int instead of a string with ss 0.12.0.
         creds_raw = psql exec query: 'select create_owner_by_login(%(service)s, %(service_id)s, %(username)s, %(name)s, %(email)s, %(oauth_token)s) as data' data: {'service': 'github', 'service_id': service_id, 'username': user['login'], 'name': user['name'], 'email': primary_email, 'oauth_token': token}
-        creds = creds_raw['results'][0]['data']
+        creds = creds_raw[0]['data']
 
         # Get the token secret.
         secret_raw = psql exec query: 'select secret from token_secrets where token_uuid=%(token_uuid)s' data: {'token_uuid': creds['token_uuid']}
-        token_secret = secret_raw['results'][0]['secret']
+        token_secret = secret_raw[0]['secret']
 
         # Check if the user is in the beta list.
         beta_raw = psql exec query: 'select true as beta from app_runtime.beta_users where username=%(login)s limit 1' data: {'login': user['login']}
-        beta = beta_raw['results'][0]['beta']
+        beta = beta_raw[0]['beta']
         if beta == null
           beta = false
 
