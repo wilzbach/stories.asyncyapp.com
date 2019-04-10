@@ -28,11 +28,17 @@ http server as server
 
     project_id = app.secrets.project_id
 
+    min_level = req.query_params["level"]
+    if min_level == null
+        min_level = "info"
+
+    min_level = min_level uppercase
+
     if req.query_params["all"] == "true"
       # Return all logs from the namespace.
       filter = "resource.type: container resource.labels.project_id: {project_id} resource.labels.namespace_id: {app_uuid}"
     else
-      filter = "logName:projects/{project_id}/logs/engine resource.type:global jsonPayload.app_id:{app_uuid} severity >= INFO"
+      filter = "logName:projects/{project_id}/logs/engine resource.type:global jsonPayload.app_id:{app_uuid} severity >= {min_level}"
 
     logs = stackdriver entries_list filter: filter page_size: 100 order_by: "timestamp desc"
     req write content: (json stringify content: logs)
