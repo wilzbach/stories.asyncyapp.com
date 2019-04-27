@@ -1,24 +1,24 @@
 http server as client
     when client listen path: '/github' as request
         state = request.query_params['state']  # cli generated
-        redirect_url = 'https://stories.asyncyapp.com/github/oauth_success'
+        redirect_url = 'https://stories.storyscriptapp.com/github/oauth_success'
         request redirect url: 'https://github.com/login/oauth/authorize' query: {'scope': 'user:email,write:repo_hook,public_repo', 'state': state, 'client_id': app.secrets.github_client_id, 'redirect_uri': redirect_url}
 
     # BEGIN - Proxy for OAuth initiated via the Hub API.
 
     when client listen path: '/github/source/hub' as request
-        redirect_url = 'https://stories.asyncyapp.com/github/oauth_success/hub'
+        redirect_url = 'https://stories.storyscriptapp.com/github/oauth_success/hub'
         request redirect url: 'https://github.com/login/oauth/authorize' query: {'scope': 'user:email,write:repo_hook,public_repo', 'client_id': app.secrets.github_client_id, 'redirect_uri': redirect_url}
 
     when client listen path: '/github/oauth_success/hub' as request
         code = request.query_params['code']  # gh auth code
-        request redirect url: 'http://localhost:8080/github/oauth/success' query: {'code': code}
-#        request redirect url: 'https://api.hub.asyncy.com/github/oauth/success' query: {'code': code}
+        #request redirect url: 'http://localhost:8080/github/oauth/success' query: {'code': code}
+        request redirect url: 'https://api.hub.storyscript.io/github/oauth/success' query: {'code': code}
 
     # END - Proxy for OAuth initiated via the Hub API.
 
     # Postback URL for the GH oauth, initiated via the CLI
-    # The URL should look something like this - https://stories.asyncyapp.com/github/oauth_success
+    # The URL should look something like this - https://stories.storyscriptapp.com/github/oauth_success
     when client listen path:'/github/oauth_success' as request
         state = request.query_params['state']  # cli generated
         code = request.query_params['code']  # gh auth code
@@ -59,7 +59,7 @@ http server as client
         # Push the state in Redis.
         redis set key: state value: (json stringify content: {'id': creds['owner_uuid'], 'access_token': token_secret, 'name': user['name'], 'email': primary_email, 'username': user['login'], 'beta': beta})
         redis expire key: state seconds: 3600  # One hour.
-        request redirect url: 'https://login.asyncy.com/success' query: {'name': user['name'], 'beta': beta}
+        request redirect url: 'https://login.storyscript.io/success' query: {'name': user['name'], 'beta': beta}
 
     # The Asyncy CLI will long poll this endpoint to get login creds.
     when client listen path:'/github/oauth_callback' as request
