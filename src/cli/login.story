@@ -2,7 +2,7 @@ http server as client
     when client listen path: '/github' as request
         state = request.query_params['state']  # cli generated
         redirect_url = 'https://stories.storyscriptapp.com/github/oauth_success'
-        request redirect url: 'https://github.com/login/oauth/authorize' query: {'scope': 'user:email,write:repo_hook,public_repo', 'state': state, 'client_id': app.secrets.github_client_id, 'redirect_uri': redirect_url}
+        request redirect url: 'https://github.com/login/oauth/authorize' query: {'scope': 'user:email', 'state': state, 'client_id': app.secrets.github_client_id, 'redirect_uri': redirect_url}
 
     # BEGIN - Proxy for OAuth initiated via the Hub API.
 
