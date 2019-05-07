@@ -6,7 +6,6 @@ http server as client
     
     project_id = app.secrets.project_id
     filter = "logName:projects/{project_id}/logs/engine resource.type:global jsonPayload.app_id:engine"
-    stackdriver entries_list filter: filter page_size: 1 order_by: "timestamp desc"
 
     clevertap push event: "Health Check" properties: {} identity: "health_check"
 
