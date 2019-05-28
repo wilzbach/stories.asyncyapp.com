@@ -1,7 +1,9 @@
 function build_jira_request_body body:any returns any
+    issue_title = body["issue"]["title"]
+    issue_title_prefix = body["repository"]["full_name"]
     request = {
         "fields": {
-            "summary": body["issue"]["title"],
+            "summary": "{issue_title_prefix}: {issue_title}",
             "customfield_10028": body["issue"]["html_url"],
             "customfield_10029": body["issue"]["id"],
             "description": {
