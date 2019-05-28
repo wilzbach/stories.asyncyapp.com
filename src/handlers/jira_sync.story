@@ -1,42 +1,84 @@
 function build_jira_request_body body:any returns any
-    request = {}
-    request["fields"] = {}
-    fields = request["fields"]
-    fields["summary"] = body["issue"]["title"]
-    fields["description"]  = {
-        "type":  "doc",
-        "version": 1,
-        "content": [
-            {
-                "type": "paragraph",
+    request = {
+        "fields": {
+            "summary": body["issue"]["title"],
+            "customfield_10028": body["issue"]["html_url"],
+            "customfield_10029": body["issue"]["id"],
+            "description": {
+                "type":  "doc",
+                "version": 1,
                 "content": [
                     {
-                        "text": body["issue"]["description"],
-                        "type": "text"
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "text": body["issue"]["body"],
+                                "type": "text"
+                            }
+                        ]
                     }
                 ]
+            },
+            "project": {
+                "id": app.secrets.jira_project_id
+            },
+            "issuetype": {
+                "id": app.secrets.jira_issue_type_task_id
             }
-        ]
+        }
     }
-    fields["project"] =  {
-        "id": app.secrets.jira_project_id
-    }
-    fields["issuetype"] = {
-        "id": app.secrets.jira_issue_type_task_id
-    }
+
     return request
 
-function create_jira_issue body:any
-    prefix_url = "https://storyscript.atlassian.net"
+function get_auth_header_value returns string
     token = base64 encode content: "{app.secrets.jira_email_address}:{app.secrets.jira_api_token}"
-    http fetch  method: "post" url: "{prefix_url}/rest/api/3/issue"
-                headers: {"Authorization": "Basic {token}", "Content-Type": "application/json"}
-                body: build_jira_request_body(body:body)
+    return "Basic {token}"
+
+function get_jira_issue_id gh_issue_id: int returns string
+    url = "https://storyscript.atlassian.net/rest/api/3/search?jql=cf%5B10029%5D%3D{gh_issue_id}&fields=id"
+    headers = {"Authorization": get_auth_header_value()}
+    res = http fetch url: url headers: headers
+    return res["issues"][0]["id"] as string
+
+
+function create_jira_issue body: Map[string, any]
+    headers = {"Authorization": get_auth_header_value(), "Content-Type": "application/json"}
+    jira_payload = build_jira_request_body(body:body)
+    http fetch method: "post" url: "https://storyscript.atlassian.net/rest/api/3/issue" headers: headers body: jira_payload
+
+function update_jira_issue_status id: string transition_id: string
+    headers = {"Authorization": get_auth_header_value(), "Content-Type": "application/json"}
+    # Transition IDs:
+    # 11 - Backlog
+    # 21 - Selected for Development
+    # 31 - In Progress
+    # 41 - Done
+    # 51 - Review Required
+    jira_payload = {
+        "transition": {
+            "id": transition_id
+        }
+    }
+    http fetch method: "post" url: "https://storyscript.atlassian.net/rest/api/3/issue/{id}/transitions" headers: headers body: jira_payload
+
+
+function close_jira_issue id: string
+    update_jira_issue_status(id: id transition_id: "41")
 
 when http server listen path: "/jira/sync" method: "post" as req
     if req.headers["X-Github-Event"] != "issues"
         return
-    body = req.body
-    if body["action"] == "opened"
-        create_jira_issue(body: body)
-    log info msg: req.body
+
+    if req.body["action"] == "opened"
+        create_jira_issue(body: req.body)
+    else if req.body["action"] == "closed"
+        jira_issue_id = get_jira_issue_id(gh_issue_id: req.body["issue"]["id"])
+        
+        if jira_issue_id == null
+            issue_link = req.body['issue']['html_url']
+            log error msg: "No associated JIRA issue found for GitHub issue {issue_link}!"
+            return
+
+        close_jira_issue(id: jira_issue_id)
+    else
+        log info msg: req.body
