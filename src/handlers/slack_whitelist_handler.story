@@ -8,11 +8,17 @@ slack bot as client
 		
 		text = message.text
 
-		if text.split(by: " ").length() > 2
+		parts = text.split(by: " ")
+
+		if parts.length() != 3
+			slack send text: "Usage: whitelist <GitHub username> <email address>"
+					channel: "#beta"
 			return
 		
-		username = text.split(by: "whitelist ")[1]
-		username = username.replace(item: " " by: "")
+		username = parts[1]
+		emailAddress = parts[2]
+		emailAddress = emailAddress.split(by: "|")[1]
+		emailAddress = emailAddress.replace(item: ">" by: "")
 
 		rows = psql select table: "app_runtime.beta_users" where: {"username": username}
 		
@@ -22,8 +28,12 @@ slack bot as client
 			return
 
 		psql insert table: "app_runtime.beta_users" values: {"username": username}
-		
-		slack send text: "{username} has been whitelisted. Cheers!"
-					channel: "#beta"
 
-slack send text: "Bot connected" channel: "#beta"
+		clevertap push event: "Invited to Beta"
+						properties: {"GitHub Username": username}
+						identity: emailAddress
+
+		clevertap push profile: {"GitHub Username": username} identity: emailAddress
+		
+		slack send text: "{username} ({emailAddress}) has been whitelisted. Cheers!"
+					channel: "#beta"
