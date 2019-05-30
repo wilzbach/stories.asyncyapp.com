@@ -1,6 +1,6 @@
 slack bot as client
 	when client hears channel: "#beta" pattern: "whitelist" as message
-		allowed_users = ["UD9S1PLLU", "UAAS7696Y", "U88SC7HQD"]
+		allowed_users = ["UD9S1PLLU", "UAAS7696Y", "U88SC7HQD", "UJ08ADWKT"]
 		if !allowed_users.contains(item: message.user)
 			slack send text: "You're not permitted to whitelist users into the beta programme."
 						channel: "#beta"
