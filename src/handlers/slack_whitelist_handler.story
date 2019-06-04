@@ -17,8 +17,9 @@ slack bot as client
 		
 		username = parts[1]
 		emailAddress = parts[2]
-		emailAddress = emailAddress.split(by: "|")[1]
-		emailAddress = emailAddress.replace(item: ">" by: "")
+		if emailAddress.contains(item:"|")
+			emailAddress = emailAddress.split(by: "|")[1]
+			emailAddress = emailAddress.replace(item: ">" by: "")
 
 		rows = psql select table: "app_runtime.beta_users" where: {"username": username}
 		
