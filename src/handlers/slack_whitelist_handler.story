@@ -1,31 +1,34 @@
 when http server listen path: "/slack/commands/whitelist" method: "post" as req
-	text = req.query_params["text"]
+    if req.query_params["token"] != app.secrets.slack_token
+        return
 
-	parts = text.split(by: " ")
+    text = req.query_params["text"]
 
-	if parts.length() != 2
-		slack send text: "Usage: /whitelist <GitHub username> <email address>"
-				channel: "#beta"
-		return
-	
-	username = parts[0]
-	emailAddress = parts[1]
+    parts = text.split(by: " ")
 
-	rows = psql select table: "app_runtime.beta_users" where: {"username": username}
-	
-	if rows.length() == 1
-		slack send text: "{username} has been *previously* whitelisted."
-				channel: "#beta"
-		return
+    if parts.length() != 2
+        slack send text: "Usage: /whitelist <GitHub username> <email address>"
+                channel: "#beta"
+        return
+    
+    username = parts[0]
+    emailAddress = parts[1]
 
-	psql insert table: "app_runtime.beta_users" values: {"username": username}
+    rows = psql select table: "app_runtime.beta_users" where: {"username": username}
+    
+    if rows.length() == 1
+        slack send text: "{username} has been *previously* whitelisted."
+                channel: "#beta"
+        return
 
-	clevertap push event: "Invited to Beta"
-					properties: {"GitHub Username": username}
-					identity: emailAddress
+    psql insert table: "app_runtime.beta_users" values: {"username": username}
 
-	clevertap push profile: {"GitHub Username": username} identity: emailAddress
-	
-	slack send text: "{username} ({emailAddress}) has been whitelisted. Cheers!"
-				channel: "#beta"
-	log info msg: req
+    clevertap push event: "Invited to Beta"
+                    properties: {"GitHub Username": username}
+                    identity: emailAddress
+
+    clevertap push profile: {"GitHub Username": username} identity: emailAddress
+    
+    slack send text: "{username} ({emailAddress}) has been whitelisted. Cheers!"
+                channel: "#beta"
+    log info msg: req
