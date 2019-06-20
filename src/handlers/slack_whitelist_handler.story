@@ -1,10 +1,4 @@
 when http server listen path: "/slack/commands/whitelist" method: "post" as req
-	allowed_users = ["UD9S1PLLU", "UAAS7696Y", "U88SC7HQD", "UJ08ADWKT"]
-	if !allowed_users.contains(item: req.query_params["user_id"])
-			slack send text: "You're not permitted to whitelist users into the beta programme."
-						channel: "#beta"
-			return
-	
 	text = req.query_params["text"]
 
 	parts = text.split(by: " ")
