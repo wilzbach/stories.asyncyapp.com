@@ -6,7 +6,7 @@ function mapGHUsernameToJiraAccountId username: string returns string
         "chrisstpierre": "5cf5129d0495ae0e8f760ce6",
         "JeanBarriere": "5cf5129ca4354c0d8e70b102",
         "judepereira": "5cdc0a0948f7b90dbfd607d8",
-        "kenneth-reitz": "5cee9db2e08ebb0f2a666b1b",
+        "rohit121": "5cfe22c02cdc170c579d3c21",
         "stevepeak": "5cdd3753b588780fd3da7678",
         "TonyRice": "5cefc2102c0c7e0fa1e9dbca",
         "wilzbach": "5cdd375109c5fa0fd9fae9ec"
