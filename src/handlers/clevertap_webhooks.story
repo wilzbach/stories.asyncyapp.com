@@ -1,4 +1,5 @@
 
+
 when http server listen path: "/webhooks/clevertap" method: "post" as req 
     if req.body == null
         return
@@ -8,7 +9,7 @@ when http server listen path: "/webhooks/clevertap" method: "post" as req
         profile = dataObj["profileData"] 
         event = dataObj["event_properties"]
         if key_values.contains(key: 'first-app-deploy')  
-            slack send text: "{profile['githubusername']} has deployed their first app {event['App name']} Hurray!!" 
+            slack send text: "{profile['githubusername']} has deployed {event['App name']}. Hurray!!" 
             channel: "#app_alerts" 
         else if key_values.contains(key: 'app-down')
             slack send text: "User {profile['githubusername']} app called {event['App name']} has gone down. Someone check asap." 
@@ -22,3 +23,5 @@ when http server listen path: "/webhooks/clevertap" method: "post" as req
         else if key_values.contains(key: 'login')
             slack send text: "{profile['githubusername']} has logged into Storyscript from cli. Yay!" 
             channel: "#app_alerts"   
+
+
