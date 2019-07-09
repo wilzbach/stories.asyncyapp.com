@@ -47,9 +47,11 @@ http server as client
 
         # Check if the user is in the beta list.
         beta_raw = psql exec query: 'select true as beta from app_runtime.beta_users where username=%(login)s limit 1' data: {'login': user['login']}
-        beta = beta_raw[0]['beta']
-        if beta == null
-          beta = false
+
+        if beta_raw.length() == 0
+            beta = false
+        else
+            beta = beta_raw[0].get(key: "beta" default: false)
 
         clevertap push profile: {'GitHub Username': user['login'], 'Email': primary_email, 'Name': user['name']} identity: creds['owner_uuid']
 
