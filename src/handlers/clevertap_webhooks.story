@@ -15,7 +15,7 @@ when http server listen path: "/webhooks/clevertap" method: "post" as req
             slack send text: "User {profile['githubusername']} app called {event['App name']} has gone down. Someone check asap." 
             channel: "#app_alerts" 
         else if key_values.contains(key: "beta-interested")
-            slack send text: "{profile['githubusername']} is interested in the Beta. The more the merrier!" 
+            slack send text: "GH user {event['githubusername']} with email {event['email']} is interested in the Beta. The more the merrier!"
             channel: "#app_alerts"   
         else if key_values.contains(key: "beta-accepted")
             slack send text: "{profile['githubusername']} has been whitelisted into Beta" 
