@@ -8,20 +8,24 @@ when http server listen path: "/webhooks/clevertap" method: "post" as req
     foreach profiles_qualified as dataObj
         profile = dataObj["profileData"] 
         event = dataObj["event_properties"]
+    
+        if key_values.contains(key: "waiting-invite")
+            slack send text: "GH user {profile['githubusername']} with email {profile['email']} is waiting to be invited to beta." 
+            channel: "#app_alerts"      
         if key_values.contains(key: "first-app-deploy")  
-            slack send text: "{profile['githubusername']} has deployed {event['App name']}. Hurray!!" 
+            slack send text: "GH user {profile['githubusername']} with email {profile['email']} has deployed {event['App name']}. Hurray!!"
             channel: "#app_alerts" 
         else if key_values.contains(key: "app-down")
-            slack send text: "User {profile['githubusername']} app called {event['App name']} has gone down. Someone check asap." 
+            slack send text: "App - {event['App name']} has gone down.GH User {profile['githubusername']} with email {profile['email']}. Someone check asap."
             channel: "#app_alerts" 
         else if key_values.contains(key: "beta-interested")
             slack send text: "GH user {event['GitHub Username']} with email {event['Email']} is interested in the Beta. The more the merrier!"
             channel: "#app_alerts"   
         else if key_values.contains(key: "beta-accepted")
-            slack send text: "{profile['githubusername']} has been whitelisted into Beta" 
+            slack send text: "GH user {profile['githubusername']} with email {profile['email']} has been whitelisted into Beta"
             channel: "#app_alerts"     
         else if key_values.contains(key: "login")
-            slack send text: "{profile['githubusername']} has logged into Storyscript from cli. Yay!" 
+            slack send text: "GH user {profile['githubusername']} with email {profile['email']} has logged into Storyscript from cli. Yay!"
             channel: "#app_alerts"   
 
 
