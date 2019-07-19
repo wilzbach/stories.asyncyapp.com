@@ -13,7 +13,7 @@ when http server listen path: "/webhooks/clevertap" method: "post" as req
             slack send text: "GH user {profile['githubusername']} with email {profile['email']} is waiting to be invited to beta." 
             channel: "#app_alerts"      
         if key_values.contains(key: "first-app-deploy")  
-            slack send text: "GH user {profile['githubusername']} with email {profile['Email']} has deployed {event['App name']}. Hurray!!"
+            slack send text: "GH user {profile['githubusername']} with email {dataObj['email']} has deployed {event['App name']}. Hurray!!"
             channel: "#app_alerts" 
         else if key_values.contains(key: "app-down")
             slack send text: "App - {event['App name']} has gone down.GH User {profile['githubusername']} with email {profile['email']}. Someone check asap."
