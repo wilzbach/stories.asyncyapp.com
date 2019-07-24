@@ -1,6 +1,6 @@
 http server as server
   when server listen path: "/github/storyscript/release" method: "post" as req
-    if req.headers["X-Github-Event"] == "release" and req.body["release"]["draft"] == false
+    if req.headers["X-Github-Event"] == "release" and req.body["release"]["draft"] == false and req.body["action"] == "published"
       release = req.body["release"]
       tag_name = release["tag_name"]
       full_name = req.body["repository"]["full_name"]
