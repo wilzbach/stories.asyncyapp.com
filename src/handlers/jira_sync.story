@@ -57,14 +57,24 @@ function build_jira_request_body body:any returns any
 
 
 function get_auth_header_value returns string
-    token = base64 encode content: "{app.secrets.jira_email_address}:{app.secrets.jira_api_token}"
-    return "Basic {token}"
+    return "Basic {app.secrets.b64_jira_auth}"
+
+
+function getCurrentSprintId returns int
+    url = "https://storyscript.atlassian.net/rest/agile/1.0/board/5/sprint?state=active"
+    headers = {"Authorization": get_auth_header_value()}
+    res = http fetch url: url headers: headers
+    return res["values"][0]["id"] as int
 
 
 function get_jira_issue_id gh_issue_id: int returns string
     url = "https://storyscript.atlassian.net/rest/api/3/search?jql=cf%5B10029%5D%3D{gh_issue_id}&fields=id"
     headers = {"Authorization": get_auth_header_value()}
     res = http fetch url: url headers: headers
+
+    if res["issues"].length() == 0
+        return res.get(key: "a_key_which_doesnt_exist_because_I_cannot_return_null" default: null) as string
+
     return res["issues"][0]["id"] as string
 
 
@@ -97,6 +107,16 @@ function is_author_a_team_member gh_payload: Map[string, any] returns boolean
     return allowed_roles.contains(item: gh_payload["issue"]["author_association"]) as boolean
 
 
+function addJiraIssueToCurrentSprint jiraIssueId: string
+    currentSprintId = getCurrentSprintId()
+    url = "https://storyscript.atlassian.net/rest/agile/1.0/sprint/{currentSprintId}/issue"
+    headers = {"Authorization": get_auth_header_value(), "Content-Type": "application/json"}
+
+    payload = {"issues": [jiraIssueId]}
+
+    http fetch method: "post" url: url headers: headers body: payload
+
+
 function assignJiraIssue jiraIssueId: string body: Map[string, any]
     url = "https://storyscript.atlassian.net/rest/api/3/issue/{jiraIssueId}/assignee"
     headers = {"Authorization": get_auth_header_value(), "Content-Type": "application/json"}
@@ -108,6 +128,7 @@ function assignJiraIssue jiraIssueId: string body: Map[string, any]
         return
 
     http fetch body: {"accountId": accountId} method: "put" headers: headers url: url
+    addJiraIssueToCurrentSprint(jiraIssueId: jiraIssueId)
 
 
 when http server listen path: "/jira/sync" method: "post" as req
@@ -134,8 +155,14 @@ when http server listen path: "/jira/sync" method: "post" as req
         jiraIssueId = get_jira_issue_id(gh_issue_id: req.body["issue"]["id"])
         
         if jiraIssueId == null
-            issue_link = req.body["issue"]["html_url"]
-            log error msg: "No associated JIRA issue found for GitHub issue {issue_link}!"
+            if is_author_a_team_member(gh_payload: req.body)
+                jiraIssueId = create_jira_issue(body: req.body)
+                if jiraIssueId == null
+                    log error msg: "Failed to create a JIRA issue for issue closed/reopened! Issue = {req.body}"
+                    return
+
+        if jiraIssueId == null
+            log warn msg: "Ignored issue which was closed/reopened. Issue = {req.body}"
             return
 
         transition_id = "41" # Done.
