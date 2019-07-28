@@ -100,9 +100,10 @@ function is_author_a_team_member gh_payload: Map[string, any] returns boolean
 function assignJiraIssue jiraIssueId: string body: Map[string, any]
     url = "https://storyscript.atlassian.net/rest/api/3/issue/{jiraIssueId}/assignee"
     headers = {"Authorization": get_auth_header_value(), "Content-Type": "application/json"}
-    accountId = mapGHUsernameToJiraAccountId(username: body["assignee"]["login"])
+    ghUsername = body["assignee"]["login"]
+    accountId = mapGHUsernameToJiraAccountId(username: ghUsername)
     if accountId == null
-        slack send text: "jira-sync: GitHub user {username} could not be resolved to a JIRA user. Please update the mapping here: https://github.com/storyscript/stories.storyscriptapp.com/blob/master/src/handlers/jira_sync.story"
+        slack send text: "jira-sync: GitHub user {ghUsername} could not be resolved to a JIRA user. Please update the mapping here: https://github.com/storyscript/stories.storyscriptapp.com/blob/master/src/handlers/jira_sync.story"
                     channel: "#engineering"
         return
 
