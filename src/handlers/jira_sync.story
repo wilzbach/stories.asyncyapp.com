@@ -9,7 +9,10 @@ function mapGHUsernameToJiraAccountId username: string returns string
         "rohit121": "5cfe22c02cdc170c579d3c21",
         "stevepeak": "5cdd3753b588780fd3da7678",
         "TonyRice": "5cefc2102c0c7e0fa1e9dbca",
-        "wilzbach": "5cdd375109c5fa0fd9fae9ec"
+        "wilzbach": "5cdd375109c5fa0fd9fae9ec",
+        "jayvdb": "5d3aaf5faf1d920bc9978934",
+        "adnrs96": "5d3aaf122acc2d0c6219f9e7",
+        "steelbrain": "5d3aaf5f1ecea00c5c2d4e80" 
     }
     return m[username]
 
