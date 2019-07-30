@@ -15,13 +15,15 @@ function mapGHUsernameToJiraAccountId username: string returns string
         "steelbrain": "5d3aaf5f1ecea00c5c2d4e80",
         "StoryScriptAI": "5d3aaf5f1ecea00c5c2d4e80"
     }
-    return m[username]
+    return m.get(key: username default: null)
 
 
 function build_jira_request_body body:any returns any
     issue_title = body["issue"]["title"]
     issue_title_prefix = body["repository"]["full_name"]
     reporterAccountId = mapGHUsernameToJiraAccountId(username: body["issue"]["user"]["login"])
+    if reporterAccountId == null
+        reporterAccountId = mapGHUsernameToJiraAccountId(username: "judepereira")  # default?
     request = {
         "fields": {
             "summary": "{issue_title_prefix}: {issue_title}",
@@ -105,7 +107,15 @@ function updateJiraIssueStatus id: string transition_id: string
 
 function is_author_a_team_member gh_payload: Map[string, any] returns boolean
     allowed_roles = ["COLLABORATOR", "MEMBER", "OWNER"]
-    return allowed_roles.contains(item: gh_payload["issue"]["author_association"]) as boolean
+    if allowed_roles.contains(item: gh_payload["issue"]["author_association"]) as boolean
+        return true
+    
+    login = gh_payload.get(key: "sender" default: {}).get(key: "login" default: null)
+
+    if mapGHUsernameToJiraAccountId(username: login) != null
+        return true
+
+    return false
 
 
 function addJiraIssueToCurrentSprint jiraIssueId: string
