@@ -8,12 +8,24 @@ http server as client
 
     when client listen path: "/github/source/hub" as request
         redirect_url = "https://stories.storyscriptapp.com/github/oauth_success/hub"
-        request redirect url: "https://github.com/login/oauth/authorize" query: {"scope": "user:email", "client_id": app.secrets.github_client_id, "redirect_uri": redirect_url}
+        state = request.query_params["state"] # hub generated
+        request redirect url: "https://github.com/login/oauth/authorize" query: {"scope": "user:email", "state": state, "client_id": app.secrets.github_client_id, "redirect_uri": redirect_url}
+
+    when client listen path: "/github/source/dashboard" as request
+        redirect_url = "https://stories.storyscriptapp.com/github/oauth_success/dashboard"
+        state = request.query_params["state"] # dashboard generated
+        request redirect url: "https://github.com/login/oauth/authorize" query: {"scope": "user:email", "state": state, "client_id": app.secrets.github_client_id, "redirect_uri": redirect_url}
+
 
     when client listen path: "/github/oauth_success/hub" as request
         code = request.query_params["code"]  # gh auth code
-        #request redirect url: "http://localhost:8080/github/oauth/success" query: {"code": code}
-        request redirect url: "https://api.hub.storyscript.io/github/oauth/success" query: {"code": code}
+        state = request.query_params["state"] # hub generated
+        request redirect url: "https://api.hub.storyscript.io/auth/success" query: {"code": code, "state": state}
+
+    when client listen path: "/github/oauth_success/dashboard" as request
+        code = request.query_params["code"]  # gh auth code
+        state = request.query_params["state"] # dashboard generated
+        request redirect url: "https://api-dashboard.storyscript.io/auth/gh/success" query: {"code": code, "state": state}
 
     # END - Proxy for OAuth initiated via the Hub API.
 
