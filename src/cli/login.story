@@ -12,8 +12,13 @@ http server as client
 
     when client listen path: "/github/oauth_success/hub" as request
         code = request.query_params["code"]  # gh auth code
-        #request redirect url: "http://localhost:8080/github/oauth/success" query: {"code": code}
-        request redirect url: "https://api.hub.storyscript.io/github/oauth/success" query: {"code": code}
+        state = request.query_params["state"] # hub generated state
+        request redirect url: "https://api.hub.storyscript.io/auth/success" query: {"code": code, "state": state}
+
+    when client listen path: "/github/oauth_success/dashboard" as request
+        code = request.query_params["code"]  # gh auth code
+        state = request.query_params["state"] # dash generated state
+        request redirect url: "https://api-dashboard.storyscript.io/auth/gh/success" query: {"code": code, "state": state}
 
     # END - Proxy for OAuth initiated via the Hub API.
 
