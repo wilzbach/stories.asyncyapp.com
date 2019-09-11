@@ -3,7 +3,6 @@ function mapGHUsernameToJiraAccountId username: string returns string
         "anukul": "557058:9427db20-4741-4c72-8b0b-a629203e015f",
         "Arinono": "5cf5129bc6a03f0f1bb0905a",
         "aydaoz": "5cf5129a23e75a0e7d27cbe7",
-        "chrisstpierre": "5cf5129d0495ae0e8f760ce6",
         "JeanBarriere": "5cf5129ca4354c0d8e70b102",
         "judepereira": "5cdc0a0948f7b90dbfd607d8",
         "rohit121": "5cfe22c02cdc170c579d3c21",
@@ -13,7 +12,8 @@ function mapGHUsernameToJiraAccountId username: string returns string
         "jayvdb": "5d3aaf5faf1d920bc9978934",
         "adnrs96": "5d3aaf122acc2d0c6219f9e7",
         "steelbrain": "5d3aaf5f1ecea00c5c2d4e80",
-        "StoryScriptAI": "5d3aaf5f1ecea00c5c2d4e80"
+        "StoryScriptAI": "5d3aaf5f1ecea00c5c2d4e80",
+        "williammartin": "5d78c6a0ae19790db93fc5d5"
     }
     return m.get(key: username default: null)
 
