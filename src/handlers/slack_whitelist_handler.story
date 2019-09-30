@@ -31,4 +31,4 @@ when http server listen path: "/slack/commands/whitelist" method: "post" as req
     
     slack send text: "{username} ({emailAddress}) has been whitelisted. Cheers!"
                 channel: "#beta"
-    log info msg: req
+    log info msg: req as string

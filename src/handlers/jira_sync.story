@@ -5,7 +5,6 @@ function mapGHUsernameToJiraAccountId username: string returns string
         "aydaoz": "5cf5129a23e75a0e7d27cbe7",
         "JeanBarriere": "5cf5129ca4354c0d8e70b102",
         "judepereira": "5cdc0a0948f7b90dbfd607d8",
-        "rohit121": "5cfe22c02cdc170c579d3c21",
         "stevepeak": "5cdd3753b588780fd3da7678",
         "TonyRice": "5cefc2102c0c7e0fa1e9dbca",
         "wilzbach": "5cdd375109c5fa0fd9fae9ec",
@@ -75,10 +74,14 @@ function get_jira_issue_id gh_issue_id: int returns string
     headers = {"Authorization": get_auth_header_value()}
     res = http fetch url: url headers: headers
 
-    if res["issues"].length() == 0
-        return res.get(key: "a_key_which_doesnt_exist_because_I_cannot_return_null" default: null) as string
+    out = "ignore_me"  # https://github.com/storyscript/storyscript/issues/1183
 
-    return res["issues"][0]["id"] as string
+    if res["issues"].length() == 0
+        out = res.get(key: "a_key_which_doesnt_exist_because_I_cannot_return_null" default: null) as string
+    else
+        out = res["issues"][0]["id"] as string
+
+    return out as string
 
 
 function create_jira_issue body: Map[string, any] returns string
@@ -110,7 +113,7 @@ function is_author_a_team_member gh_payload: Map[string, any] returns boolean
     if allowed_roles.contains(item: gh_payload["issue"]["author_association"]) as boolean
         return true
     
-    login = gh_payload.get(key: "sender" default: {}).get(key: "login" default: null)
+    login = gh_payload.get(key: "sender" default: {} as Map[string, Map[string, string]]).get(key: "login" default: null)
 
     if mapGHUsernameToJiraAccountId(username: login) != null
         return true
@@ -150,7 +153,7 @@ when http server listen path: "/jira/sync" method: "post" as req
         if is_author_a_team_member(gh_payload: req.body)
             create_jira_issue(body: req.body)
     else if req.body["action"] == "assigned"
-        if !is_author_a_team_member(gh_payload: req.body)
+        if not is_author_a_team_member(gh_payload: req.body)
             return
 
         jiraIssueId = get_jira_issue_id(gh_issue_id: req.body["issue"]["id"])

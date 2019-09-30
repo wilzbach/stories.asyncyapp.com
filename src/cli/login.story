@@ -63,11 +63,11 @@ http server as client
         if beta_raw.length() == 0
             beta = false
         else
-            beta = beta_raw[0].get(key: "beta" default: false)
+            beta = beta_raw[0].get(key: "beta" default: false) as boolean
 
         clevertap push profile: {"GitHub Username": user["login"], "Email": primary_email, "Name": user["name"]} identity: creds["owner_uuid"]
 
-        if !beta
+        if not beta
           clevertap push event: "Login Failed" properties: {"Reason": "Not in beta"} identity: creds["owner_uuid"]
 
         # Push the state in Redis.
@@ -83,8 +83,8 @@ http server as client
             return
 
         user_data = json parse content: user_data["result"]
+        request set_header key: "Content-Type" value: "application/json; charset=utf-8"
         if user_data["beta"] as boolean
-            request set_header key: "Content-Type" value: "application/json; charset=utf-8"
-            request write content: user_data
+            request write content: (json stringify content: user_data)
         else
-            request write content: {"beta": false}
+            request write content: (json stringify content: {"beta": false})
