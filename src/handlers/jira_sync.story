@@ -146,6 +146,7 @@ function assignJiraIssue jiraIssueId: string body: Map[string, any]
 
 
 when http server listen path: "/jira/sync" method: "post" as req
+    return  # Ignore all issues for now.
     if req.headers["X-Github-Event"] != "issues"
         return
 
