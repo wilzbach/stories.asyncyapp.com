@@ -67,10 +67,10 @@ http server as client
     # The Asyncy CLI will long poll this endpoint to get login creds.
     when client listen path:"/github/oauth_callback" as request
         user_data = redis get key: request.query_params["state"]  # CLI generated uuid.
-        if user_data["result"] == null
+        if user_data == null
             request write content: "null"
             return
 
-        user_data = json parse content: user_data["result"]
+        user_data = json parse content: user_data
         request set_header key: "Content-Type" value: "application/json; charset=utf-8"
         request write content: (json stringify content: user_data)
