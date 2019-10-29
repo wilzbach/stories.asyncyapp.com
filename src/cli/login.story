@@ -38,23 +38,23 @@ http server as client
         # Get the oauth_token.
         body = {"client_id": app.secrets.github_client_id, "client_secret": app.secrets.github_client_secret, "code": code, "state": state}
         headers = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json"}
-        gh_response = http fetch url: "https://github.com/login/oauth/access_token" method: "post" body: body headers: headers
+        gh_response = (http fetch url: "https://github.com/login/oauth/access_token" method: "post" body: body headers: headers) to Map[string,string]
         token = gh_response["access_token"]
 
         headers = {"Authorization": "bearer {token}"}
-        user = http fetch url: "https://api.github.com/user" headers: headers
+        user = (http fetch url: "https://api.github.com/user" headers: headers) to Map[string,string]
 
         # If a user's email is marked as private, the /user API will not return it. Hence, always hit /user/emails.
-        emails = http fetch url: "https://api.github.com/user/emails" headers: headers
+        emails = (http fetch url: "https://api.github.com/user/emails" headers: headers) to List[Map[string,string]]
         primary_email = emails[0]["email"]
 
         # Insert into postgres.
-        service_id = user["id"] as string
-        creds_raw = psql exec query: "select create_owner_by_login(%(service)s, %(service_id)s, %(username)s, %(name)s, %(email)s, %(oauth_token)s) as data" data: {"service": "github", "service_id": service_id, "username": user["login"], "name": user["name"], "email": primary_email, "oauth_token": token}
-        creds = creds_raw[0]["data"]
+        service_id = user["id"] to string
+        creds_raw = (psql exec query: "select create_owner_by_login(%(service)s, %(service_id)s, %(username)s, %(name)s, %(email)s, %(oauth_token)s) as data" data: {"service": "github", "service_id": service_id, "username": user["login"], "name": user["name"], "email": primary_email, "oauth_token": token}) to List[Map[string,any]]
+        creds = creds_raw[0]["data"] to Map[string,string]
 
         # Get the token secret.
-        secret_raw = psql exec query: "select secret from token_secrets where token_uuid=%(token_uuid)s" data: {"token_uuid": creds["token_uuid"]}
+        secret_raw = (psql exec query: "select secret from token_secrets where token_uuid=%(token_uuid)s" data: {"token_uuid": creds["token_uuid"]}) to List[Map[string,string]]
         token_secret = secret_raw[0]["secret"]
 
         clevertap push profile: {"GitHub Username": user["login"], "Email": primary_email, "Name": user["name"]} identity: creds["owner_uuid"]
@@ -71,6 +71,5 @@ http server as client
             request write content: "null"
             return
 
-        user_data = json parse content: user_data
-        request set_header key: "Content-Type" value: "application/json; charset=utf-8"
-        request write content: (json stringify content: user_data)
+        user_response = json parse content: user_data
+        request writeJSON content: user_data

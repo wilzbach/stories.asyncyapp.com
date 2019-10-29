@@ -1,8 +1,9 @@
 when http server listen path: "/slack/commands/whitelist" method: "post" as req
-    if req.query_params["token"] != app.secrets.slack_token
+    token = req.query_params["token"] to string
+    if token != app.secrets.slack_token
         return
 
-    text = req.query_params["text"]
+    text = req.query_params["text"] to string
 
     parts = text.split(by: " ")
 
@@ -31,4 +32,4 @@ when http server listen path: "/slack/commands/whitelist" method: "post" as req
     
     slack send text: "{username} ({emailAddress}) has been whitelisted. Cheers!"
                 channel: "#beta"
-    log info msg: req as string
+    log info msg: req to string

@@ -1,9 +1,16 @@
 http server as server
   when server listen path: "/github/storyscript/release" method: "post" as req
-    if req.headers["X-Github-Event"] == "release" and req.body["release"]["draft"] == false and req.body["action"] == "published"
-      release = req.body["release"]
+    xEvent = req.headers["X-Github-Event"] to string
+    if xEvent != "release"
+        return
+
+    body = req.body to Map[string, any]
+    action = body["action"] to string
+    release = body["action"] to Map[string,any]
+    if (release["draft"] to boolean) and action == "published"
       tag_name = release["tag_name"]
-      full_name = req.body["repository"]["full_name"]
+      repo = body["repository"] to Map[string,string]
+      full_name = repo["full_name"]
       release_notes = "https://github.com/{full_name}/releases/tag/{tag_name}"
       http fetch method: "post" url: app.secrets.slack_webhook_channel_storyscript
                 headers: {"Content-Type": "application/json"}
