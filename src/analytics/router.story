@@ -13,5 +13,6 @@ http server as server
     clevertap push profile: profile identity: id
 
   when server listen path: "/track/ghost/subscriber/added" method: "post" as req
-    email = req.body["subscribers"][0]["email"]
+    subscribers = req.body["subscribers"] to List[Map[string,string]]
+    email = subscribers[0]["email"]
     clevertap push event: "Interested in blog updates" identity: email

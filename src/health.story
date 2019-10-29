@@ -4,6 +4,6 @@ http server as client
     redis get key: "__health_key_non_existent_ok"
     psql exec query: "select 1 from apps;"
     
-    clevertap push event: "Health Check" properties: ({} as Map[string, string])  identity: "health_check"
+    clevertap push event: "Health Check" properties: ({} to Map[string, string])  identity: "health_check"
 
     request write content: "OK"

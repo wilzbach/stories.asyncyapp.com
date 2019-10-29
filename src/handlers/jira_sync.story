@@ -18,16 +18,20 @@ function mapGHUsernameToJiraAccountId username: string returns string
 
 
 function build_jira_request_body body:any returns any
-    issue_title = body["issue"]["title"]
-    issue_title_prefix = body["repository"]["full_name"]
-    reporterAccountId = mapGHUsernameToJiraAccountId(username: body["issue"]["user"]["login"])
+    jiraBody = body to Map[string,any]
+    issue = jiraBody["issue"] to Map[string,string]
+    issue_title = issue["title"]
+    issue_title_prefix = issue["full_name"]
+    issue_nested = jiraBody["issue"] to Map[string,Map[string,string]]
+    user = issue_nested["user"]
+    reporterAccountId = mapGHUsernameToJiraAccountId(username: user["login"])
     if reporterAccountId == null
         reporterAccountId = mapGHUsernameToJiraAccountId(username: "judepereira")  # default?
     request = {
         "fields": {
             "summary": "{issue_title_prefix}: {issue_title}",
-            "customfield_10028": body["issue"]["html_url"],
-            "customfield_10029": body["issue"]["id"],
+            "customfield_10028": issue["html_url"],
+            "customfield_10029": issue["id"],
             "description": {
                 "type":  "doc",
                 "version": 1,
@@ -36,7 +40,7 @@ function build_jira_request_body body:any returns any
                         "type": "paragraph",
                         "content": [
                             {
-                                "text": body["issue"]["body"],
+                                "text": issue["body"],
                                 "type": "text"
                             }
                         ]
@@ -65,31 +69,31 @@ function get_auth_header_value returns string
 function getCurrentSprintId returns int
     url = "https://storyscript.atlassian.net/rest/agile/1.0/board/5/sprint?state=active"
     headers = {"Authorization": get_auth_header_value()}
-    res = http fetch url: url headers: headers
-    return res["values"][0]["id"] as int
+    res = (http fetch url: url headers: headers) to Map[string,List[Map[string,string]]]
+    return res["values"][0]["id"] to int
 
 
 function get_jira_issue_id gh_issue_id: int returns string
     url = "https://storyscript.atlassian.net/rest/api/3/search?jql=cf%5B10029%5D%3D{gh_issue_id}&fields=id"
     headers = {"Authorization": get_auth_header_value()}
-    res = http fetch url: url headers: headers
+    res = (http fetch url: url headers: headers) to Map[string, List[Map[string,string]]]
 
     out = "ignore_me"  # https://github.com/storyscript/storyscript/issues/1183
 
     if res["issues"].length() == 0
-        out = res.get(key: "a_key_which_doesnt_exist_because_I_cannot_return_null" default: null) as string
+        out = res.get(key: "a_key_which_doesnt_exist_because_I_cannot_return_null" default: null) to string
     else
-        out = res["issues"][0]["id"] as string
+        out = res["issues"][0]["id"] to string
 
-    return out as string
+    return out to string
 
 
 function create_jira_issue body: Map[string, any] returns string
     headers = {"Authorization": get_auth_header_value(), "Content-Type": "application/json"}
     jira_payload = build_jira_request_body(body:body)
-    res = http fetch method: "post" url: "https://storyscript.atlassian.net/rest/api/3/issue" headers: headers body: jira_payload
+    res = (http fetch method: "post" url: "https://storyscript.atlassian.net/rest/api/3/issue" headers: headers body: jira_payload) to Map[string,string]
     log info msg: "Created as https://storyscript.atlassian.net/browse/{res['key']}"
-    return res["id"] as string
+    return res["id"] to string
 
 
 function updateJiraIssueStatus id: string transition_id: string
@@ -110,10 +114,11 @@ function updateJiraIssueStatus id: string transition_id: string
 
 function is_author_a_team_member gh_payload: Map[string, any] returns boolean
     allowed_roles = ["COLLABORATOR", "MEMBER", "OWNER"]
-    if allowed_roles.contains(item: gh_payload["issue"]["author_association"]) as boolean
+    issue = gh_payload["issue"] to Map[string,string]
+    if allowed_roles.contains(item: issue["author_association"])
         return true
     
-    login = gh_payload.get(key: "sender" default: {} as Map[string, Map[string, string]]).get(key: "login" default: null)
+    login = gh_payload.get(key: "sender" default: {} to Map[string, Map[string, string]]).get(key: "login" default: null)
 
     if mapGHUsernameToJiraAccountId(username: login) != null
         return true
@@ -134,7 +139,8 @@ function addJiraIssueToCurrentSprint jiraIssueId: string
 function assignJiraIssue jiraIssueId: string body: Map[string, any]
     url = "https://storyscript.atlassian.net/rest/api/3/issue/{jiraIssueId}/assignee"
     headers = {"Authorization": get_auth_header_value(), "Content-Type": "application/json"}
-    ghUsername = body["assignee"]["login"]
+    assignee = body["assignee"] to Map[string,string]
+    ghUsername = assignee["login"]
     accountId = mapGHUsernameToJiraAccountId(username: ghUsername)
     if accountId == null
         slack send text: "jira-sync: GitHub user {ghUsername} could not be resolved to a JIRA user. Please update the mapping here: https://github.com/storyscript/stories.storyscriptapp.com/blob/master/src/handlers/jira_sync.story"
@@ -147,31 +153,36 @@ function assignJiraIssue jiraIssueId: string body: Map[string, any]
 
 when http server listen path: "/jira/sync" method: "post" as req
     return  # Ignore all issues for now.
-    if req.headers["X-Github-Event"] != "issues"
+    xEvent = req.headers["X-Github-Event"] to string
+    if xEvent != "issues"
         return
 
-    if req.body["action"] == "opened"
-        if is_author_a_team_member(gh_payload: req.body)
-            create_jira_issue(body: req.body)
-    else if req.body["action"] == "assigned"
-        if not is_author_a_team_member(gh_payload: req.body)
+    body = req.body to Map[string,any]
+    issue = body["issue"] to Map[string,string]
+    issue_id = issue["id"] to int
+    action = body["action"] to string
+    if action == "opened"
+        if is_author_a_team_member(gh_payload: body)
+            create_jira_issue(body: body)
+    else if action == "assigned"
+        if not is_author_a_team_member(gh_payload: body)
             return
 
-        jiraIssueId = get_jira_issue_id(gh_issue_id: req.body["issue"]["id"])
+        jiraIssueId = get_jira_issue_id(gh_issue_id: issue_id)
         if jiraIssueId == null
-            jiraIssueId = create_jira_issue(body: req.body)
+            jiraIssueId = create_jira_issue(body: body)
             if jiraIssueId == null
                 log error msg: "Failed to create a JIRA issue for issue assigned! Issue = {req.body}"
                 return
 
-        assignJiraIssue(body: req.body jiraIssueId: jiraIssueId)
+        assignJiraIssue(body: body jiraIssueId: jiraIssueId)
         updateJiraIssueStatus(id: jiraIssueId transition_id: "31")  # In progress.
-    else if req.body["action"] == "closed" or req.body["action"] == "reopened"
-        jiraIssueId = get_jira_issue_id(gh_issue_id: req.body["issue"]["id"])
+    else if action == "closed" or action == "reopened"
+        jiraIssueId = get_jira_issue_id(gh_issue_id: issue_id)
         
         if jiraIssueId == null
-            if is_author_a_team_member(gh_payload: req.body)
-                jiraIssueId = create_jira_issue(body: req.body)
+            if is_author_a_team_member(gh_payload: body)
+                jiraIssueId = create_jira_issue(body: body)
                 if jiraIssueId == null
                     log error msg: "Failed to create a JIRA issue for issue closed/reopened! Issue = {req.body}"
                     return
@@ -182,9 +193,9 @@ when http server listen path: "/jira/sync" method: "post" as req
 
         transition_id = "41" # Done.
         
-        if req.body["action"] == "reopened"
+        if action == "reopened"
             transition_id = "31" # In progress.
 
         updateJiraIssueStatus(id: jiraIssueId transition_id: transition_id)
     else
-        log info msg: req.body
+        log info msg: "{req.body}"
