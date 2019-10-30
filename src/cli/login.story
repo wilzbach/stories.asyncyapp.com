@@ -72,4 +72,4 @@ http server as client
             return
 
         user_response = json parse content: user_data
-        request writeJSON content: user_data
+        request writeJSON content: user_response
