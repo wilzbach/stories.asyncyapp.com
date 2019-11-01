@@ -6,8 +6,8 @@ http server as server
 
     body = req.body to Map[string, any]
     action = body["action"] to string
-    release = body["action"] to Map[string,any]
-    if (release["draft"] to boolean) and action == "published"
+    release = body["release"] to Map[string, any]
+    if (release["draft"] to boolean) == false and action == "released"
       tag_name = release["tag_name"]
       repo = body["repository"] to Map[string,string]
       full_name = repo["full_name"]
