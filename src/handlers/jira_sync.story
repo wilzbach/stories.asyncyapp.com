@@ -12,7 +12,8 @@ function mapGHUsernameToJiraAccountId username: string returns string
         "adnrs96": "5d3aaf122acc2d0c6219f9e7",
         "steelbrain": "5d3aaf5f1ecea00c5c2d4e80",
         "StoryScriptAI": "5d3aaf5f1ecea00c5c2d4e80",
-        "williammartin": "5d78c6a0ae19790db93fc5d5"
+        "williammartin": "5d78c6a0ae19790db93fc5d5",
+        "matthewhudson": "5d83b1b01fcbda0da1344afb"
     }
     return m.get(key: username default: null)
 
