@@ -22,7 +22,7 @@ when http server listen path: "/slack/commands/whitelist" method: "post" as req
                 channel: "#beta"
         return
 
-    psql insert table: "app_runtime.beta_users" values: {"username": username}
+    psql insert table: "app_runtime.beta_users" value: {"username": username}
 
     clevertap push event: "Invited to Beta"
                     properties: {"GitHub Username": username}
