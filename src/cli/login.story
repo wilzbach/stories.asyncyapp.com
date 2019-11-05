@@ -54,7 +54,7 @@ http server as client
         creds = creds_raw[0]["data"] to Map[string,string]
 
         # Get the token secret.
-        secret_raw = (psql exec query: "select secret from token_secrets where token_uuid=%(token_uuid)s" data: {"token_uuid": creds["token_uuid"]}) to List[Map[string,string]]
+        secret_raw = psql select table: "token_secrets" columns: ["secret"] where: {"token_uuid": creds["token_uuid"]}
         token_secret = secret_raw[0]["secret"]
 
         clevertap push profile: {"GitHub Username": user["login"], "Email": primary_email, "Name": user["name"]} identity: creds["owner_uuid"]
